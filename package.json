@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "author": "Nikolai Kuznetcov",
   "scripts": {
-    "start": "node index.js",
-    "dev": "NODE_ENV=development ts-node-dev --transpile-only --no-notify --exit-child src/index.ts",
+    "start": "node build/index.js",
+    "dev": "ts-node-dev --transpile-only --no-notify --exit-child src/index.ts",
     "build": "npm run eslint && tsc",
     "eslint": "eslint ./src --ext .ts"
   },

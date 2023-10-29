@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 routes(app);
 
-const port = process.env.NODE_ENV === 'production' ? 80 : 8080;
+const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
     console.log('Node client started on port:', port);
