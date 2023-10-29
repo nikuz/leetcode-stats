@@ -3,8 +3,8 @@ import { LeetcodeResponse } from './types';
 
 const {
     LEETCODE_API_URL,
-    USER_AGENT,
     LEETCODE_USER,
+    USER_AGENT,
 } = process.env;
 
 let totalSolved = 0;
@@ -26,6 +26,7 @@ export function syncTotalSolved(req: Request, res: Response) {
         headers: {
             'Content-Type': 'application/json',
             'Cookie': body.cookie,
+            'Referer': LEETCODE_API_URL,
             'User-Agent': USER_AGENT,
         },
         body: JSON.stringify({
@@ -47,7 +48,10 @@ export function syncTotalSolved(req: Request, res: Response) {
                 }
             `,
         }),
-    }).then(response => response.json() as Promise<{data: LeetcodeResponse}>).then(({ data }) => {
+    }).then(async response => {
+        console.log(await response.text());
+        return await response.json() as Promise<{data: LeetcodeResponse}>;
+    }).then(({ data }) => {
         const allSubmissions = data.matchedUser.submitStats.acSubmissionNum.find(item => (
             item.difficulty === 'All'
         ));
