@@ -10,8 +10,8 @@ let totalSolved = 0;
 
 function parseCookie(cookie: string) {
     return cookie
-        .split(";")
-        .map((x) => x.trim().split("="))
+        .split(';')
+        .map((x) => x.trim().split('='))
         .reduce((acc, x) => {
             acc[x[0]] = x[1];
             return acc;
