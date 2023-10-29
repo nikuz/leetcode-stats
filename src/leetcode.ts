@@ -1,13 +1,22 @@
 import { Request, Response } from 'express';
-import { LeetcodeResponse } from './types';
+import { ObjectValue } from './types';
 
 const {
     LEETCODE_API_URL,
-    LEETCODE_USER,
     USER_AGENT,
 } = process.env;
 
 let totalSolved = 0;
+
+function parseCookie(cookie: string) {
+    return cookie
+        .split(";")
+        .map((x) => x.trim().split("="))
+        .reduce((acc, x) => {
+            acc[x[0]] = x[1];
+            return acc;
+        }, {} as ObjectValue);
+}
 
 export function syncTotalSolved(req: Request, res: Response) {
     if (!LEETCODE_API_URL || !USER_AGENT) {
@@ -21,53 +30,17 @@ export function syncTotalSolved(req: Request, res: Response) {
         return res.end('cookie body parameter is required');
     }
 
-    fetch(LEETCODE_API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Cookie': body.cookie,
-            'Referer': LEETCODE_API_URL,
-            'User-Agent': USER_AGENT,
-        },
-        body: JSON.stringify({
-            variables: {
-                username: LEETCODE_USER,
-            },
-            query: `
-                query ($username: String!) {
-                    matchedUser(username: $username) {
-                        username
-                        submitStats {
-                            acSubmissionNum {
-                                difficulty
-                                count
-                                submissions
-                            }
-                        }
-                    }
-                }
-            `,
-        }),
-    }).then(async response => {
-        console.log(await response.text());
-        return await response.json() as Promise<{data: LeetcodeResponse}>;
-    }).then(({ data }) => {
-        const allSubmissions = data.matchedUser.submitStats.acSubmissionNum.find(item => (
-            item.difficulty === 'All'
-        ));
-        if (allSubmissions) {
-            totalSolved = allSubmissions.count;
-            res.end();
-        } else {
-            res.status(500);
-            res.end('Can\'t retrieve allSubmissions count from leetcode response');
-        }
-    }).catch(err => {
-        res.status(500);
-        res.end(err.message);
-    });
+    const cookies = parseCookie(body.cookie);
+
+    if (!cookies.csrftoken || cookies.csrftoken.length < 64 || !cookies.cf_clearance || cookies.cf_clearance.length < 64 || !cookies.LEETCODE_SESSION) {
+        res.status(406);
+        return res.end('cookies are wrong');
+    }
+
+    totalSolved = body.totalSolved;
+    res.end();
 }
 
 export function getTotalSolved(req: Request, res: Response) {
-    res.end(totalSolved.toString());
+    res.end(totalSolved?.toString());
 }

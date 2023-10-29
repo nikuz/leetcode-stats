@@ -1,3 +1,5 @@
+export type ObjectValue = { [name: string]: any };
+
 interface LeetcodeSubmission {
     difficulty: 'All' | 'Easy' | 'Medium' | 'Hard',
     count: number,
