@@ -1,6 +1,14 @@
-import 'dotenv/config';
+import path from 'path';
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
+dotenv.config({
+    path: path.join(__dirname, '../.env.secret'),
+    override: true,
+});
+
 import routes from './routes';
 
 const app = express();

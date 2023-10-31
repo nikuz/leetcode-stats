@@ -1,11 +1,19 @@
 import { Request, Response } from 'express';
+import {
+    S3Client,
+    PutObjectCommand,
+    GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { ObjectValue } from './types';
 
 const {
     LEETCODE_API_URL,
     USER_AGENT,
+    STORAGE_NAME,
 } = process.env;
 
+const STORAGE_FILE_NAME = 'leetcode-counter.txt';
+const s3 = new S3Client();
 let totalSolved = 0;
 
 function parseCookie(cookie: string) {
@@ -18,8 +26,19 @@ function parseCookie(cookie: string) {
         }, {} as ObjectValue);
 }
 
-export function syncTotalSolved(req: Request, res: Response) {
-    if (!LEETCODE_API_URL || !USER_AGENT) {
+(async function() {
+    const { Body } = await s3.send(
+        new GetObjectCommand({
+            Bucket: STORAGE_NAME,
+            Key: STORAGE_FILE_NAME,
+        })
+    );
+    const value = await Body?.transformToString();
+    totalSolved = Number(value);
+})();
+
+export async function syncTotalSolved(req: Request, res: Response) {
+    if (!LEETCODE_API_URL || !USER_AGENT || !STORAGE_NAME) {
         res.status(500);
         return res.end('LEETCODE_API_URL or USER_AGENT is not specified');
     }
@@ -36,6 +55,14 @@ export function syncTotalSolved(req: Request, res: Response) {
         res.status(406);
         return res.end('cookies are wrong');
     }
+
+    await s3.send(
+        new PutObjectCommand({
+            Bucket: STORAGE_NAME,
+            Key: STORAGE_FILE_NAME,
+            Body: body.totalSolved.toString(),
+        })
+    );
 
     totalSolved = body.totalSolved;
     res.end();
