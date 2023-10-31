@@ -26,17 +26,6 @@ function parseCookie(cookie: string) {
         }, {} as ObjectValue);
 }
 
-(async function() {
-    const { Body } = await s3.send(
-        new GetObjectCommand({
-            Bucket: STORAGE_NAME,
-            Key: STORAGE_FILE_NAME,
-        })
-    );
-    const value = await Body?.transformToString();
-    totalSolved = Number(value);
-})();
-
 export async function syncTotalSolved(req: Request, res: Response) {
     if (!LEETCODE_API_URL || !USER_AGENT || !STORAGE_NAME) {
         res.status(500);
@@ -68,6 +57,16 @@ export async function syncTotalSolved(req: Request, res: Response) {
     res.end();
 }
 
-export function getTotalSolved(req: Request, res: Response) {
+export async function getTotalSolved(req: Request, res: Response) {
+    if (totalSolved === 0) {
+        const { Body } = await s3.send(
+            new GetObjectCommand({
+                Bucket: STORAGE_NAME,
+                Key: STORAGE_FILE_NAME,
+            })
+        );
+        const value = await Body?.transformToString();
+        totalSolved = Number(value);
+    }
     res.end(totalSolved?.toString());
 }
